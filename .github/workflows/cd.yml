@@ -9,32 +9,7 @@ env:
   REPOSITORY_NAME: "pull-request-vote"
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    outputs:
-      is_merge: ${{ steps.check.outputs.is_merge }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Check if commit is a merge
-        id: check
-        run: |
-          echo "::set-output name=is_merge::false"
-          echo "is_merge=false" >> $GITHUB_OUTPUT
-          echo "is_merge has been set to: ${{ steps.check.outputs.is_merge }}"
-          MERGE_COMMIT=$(git log --merges -n 1 --pretty="%H")
-          echo "Merge commit: $MERGE_COMMIT"
-          echo ${{ github.sha }}
-          if [ "$MERGE_COMMIT" = "${{ github.sha }}" ]; then
-            echo "is_merge=true" >> $GITHUB_OUTPUT
-            echo "::set-output name=is_merge::true"
-          fi
-      - name: Print is_merge
-        run: |
-          echo "is_merge: ${{ steps.check.outputs.is_merge }}"
   build-push-to-ecr-then-update-infra-overlay:
-    needs: check
-    if: ${{ needs.check.outputs.is_merge == 'false' }}
     runs-on: ubuntu-latest
     # https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
     # /!\ you can skip workflow runs triggered by the push and pull_request events by including :
@@ -50,12 +25,23 @@ jobs:
     #   with:
     #     script: console.log(JSON.stringify(context, null, 2));
 
-    
     - name: Checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@v3
 
+    - name: Install GitHub CLI
+      run: |
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install gh
+    - name: Check if commit is a merge
+      id: check-merge
+      run: |
+        IS_MERGE=$(gh api /repos/${{ github.repository }}/commits/${{ github.sha }} --jq '.parents | length > 1')
+        echo "is_merge=$IS_MERGE" >> $GITHUB_OUTPUT
     - name: Configure AWS credentials
+      if: steps.check-merge.outputs.is_merge == 'false'
       # https://github.com/aws-actions/configure-aws-credentials/tree/master
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
@@ -64,10 +50,12 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Login to Amazon ECR
+      if: steps.check-merge.outputs.is_merge == 'false'
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Check if version already pushed to ECR
+      if: steps.check-merge.outputs.is_merge == 'false'
       run: |
         log()   { echo -e "\e[30;47m ${1} \e[0m ${@:2}"; }
         error() { echo -e "\e[48;5;196m ${1} \e[0m ${@:2}" >&2; }
@@ -84,6 +72,7 @@ jobs:
         echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
     - name: Build, tag, and push image to Amazon ECR
+      if: steps.check-merge.outputs.is_merge == 'false'
       id: build-image
       run: |
         log()   { echo -e "\e[30;47m ${1} \e[0m ${@:2}"; }
@@ -107,6 +96,7 @@ jobs:
         echo "TAG_VERSION=${TAG_VERSION}" >> $GITHUB_ENV
 
     - name: Checkout infra repo
+      if: steps.check-merge.outputs.is_merge == 'false'
       uses: actions/checkout@v3
       with:
         repository: ${{ secrets.GH_REPOSITORY_INFRA }} # jeromedecoster/argocd-pull-request-infra
@@ -115,6 +105,7 @@ jobs:
         fetch-depth: 0
 
     - name: Push to infra repo
+      if: steps.check-merge.outputs.is_merge == 'false'
       env:
         OVERLAY_PATH: "manifests/overlays/master"
       run: |
