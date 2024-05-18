@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  github-runner:
+    image: myoung34/github-runner:latest
+    container_name: github-runner2
+    network_mode: host
+    environment:
+      - REPO_URL=https://github.com/Duskfall/argocd-pull-request-vote
+      - RUNNER_NAME=local-runner2
+      - RUNNER_TOKEN=AATJG7PJ4SGQ3TZE23IIUDDGI7QVU
+      - RUNNER_WORKDIR=/tmp/github-runner
+      - LABELS=self-hosted,Linux,X64
+      - RUNNER_GROUP=Default
+      - ORG_RUNNER=false # set to true if this is for an organization
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./runner:/tmp/github-runner
+      - ~/.kube:/root/.kube # Add this line
+    restart: always

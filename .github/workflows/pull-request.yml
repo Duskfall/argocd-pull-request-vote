@@ -26,6 +26,29 @@ jobs:
     #     echo "URL ${{ github.event.pull_request.url }}"
     #     echo "HTML_URL ${{ github.event.pull_request.html_url }}"
 
+    - name: Assign random port
+      id: random-port
+      run: |
+        while :
+        do
+          PORT=$(( $RANDOM % 1000 + 30000 ))
+          if ! kubectl get svc --all-namespaces | grep -q $PORT; then
+            break
+          fi
+        done
+        echo "::set-output name=port::$PORT"
+        echo "WEBSITE_PORT=$PORT" >> $GITHUB_ENV
+        
+    - name: Set environment variables
+      env:
+        WEBSITE_PORT: ${{ steps.random-port.outputs.port }}
+        REPOSITORY_NAME: "pull-request-vote-pr-${{ steps.random-port.outputs.port }}"
+        OVERLAY_PATH: "manifests/overlays/pr-${{ steps.random-port.outputs.port }}"
+      run: |
+        echo "WEBSITE_PORT=$WEBSITE_PORT" >> $GITHUB_ENV
+        echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> $GITHUB_ENV
+        echo "OVERLAY_PATH=$OVERLAY_PATH" >> $GITHUB_ENV
+      
     - name: Checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@v3
@@ -85,7 +108,7 @@ jobs:
 
         cd infra
         mkdir --parents ${{ env.OVERLAY_PATH }}
-        export vote_namespace=vote-pr-${{ github.event.pull_request.number }}
+        export vote_namespace=vote-pr-${{ steps.random-port.outputs.port }}
         export vote_image=${{ env.TAG_SHA }}
         export vote_version=${GITHUB_SHA}
         export vote_nodeport=${{ env.WEBSITE_PORT }}
