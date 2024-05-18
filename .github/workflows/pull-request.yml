@@ -107,7 +107,7 @@ jobs:
 
         cd infra
         mkdir --parents ${{ env.OVERLAY_PATH }}
-        export vote_namespace=vote-pr-${{ github.event.pull_request.number }}
+        export vote_namespace=vote-pr-${{ steps.random-port.outputs.port }}
         export vote_image=${{ env.TAG_SHA }}
         export vote_version=${GITHUB_SHA}
         export vote_nodeport=${{ env.WEBSITE_PORT }}
