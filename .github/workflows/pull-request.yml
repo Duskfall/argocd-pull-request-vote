@@ -6,10 +6,10 @@ on:
   pull_request:
     types: [opened, synchronize]
 
-env: 
-  REPOSITORY_NAME: "pull-request-vote-pr-${{ github.event.pull_request.number }}"
-  OVERLAY_PATH: "manifests/overlays/pr-${{ github.event.pull_request.number }}"
-  WEBSITE_PORT: $(echo $((30000 + ${{ github.event.pull_request.number }})))
+# env: 
+#   REPOSITORY_NAME: "pull-request-vote-pr-${{ github.event.pull_request.number }}"
+#   OVERLAY_PATH: "manifests/overlays/pr-${{ github.event.pull_request.number }}"
+#   WEBSITE_PORT: $(echo $((30000 + ${{ github.event.pull_request.number }})))
 
 jobs:
   build-push:
