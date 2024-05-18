@@ -25,15 +25,17 @@ jobs:
     #   with:
     #     script: console.log(JSON.stringify(context, null, 2));
 
+    
+    - name: Checkout
+      # https://github.com/actions/checkout
+      uses: actions/checkout@v3
+
     - name: Check if commit is a merge
       run: |
         if git log --merges -n 1 --pretty="%H" | grep -q ${{ github.sha }}; then
           echo "This is a merge commit, skipping job."
           exit 0
         fi
-    - name: Checkout
-      # https://github.com/actions/checkout
-      uses: actions/checkout@v3
 
     - name: Configure AWS credentials
       # https://github.com/aws-actions/configure-aws-credentials/tree/master
