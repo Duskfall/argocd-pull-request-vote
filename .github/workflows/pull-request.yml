@@ -31,7 +31,7 @@ jobs:
       run: |
         while :
         do
-          PORT=$(( $RANDOM % 10000 + 21000 ))
+          PORT=$(( $RANDOM % 1000 + 30000 ))
           if ! kubectl get svc --all-namespaces | grep -q $PORT; then
             break
           fi
