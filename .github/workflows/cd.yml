@@ -20,7 +20,8 @@ jobs:
         id: check
         run: |
           echo "::set-output name=is_merge::false"
-          if git log -n 1 --pretty="%H" | grep -q ${{ github.sha }}; then
+          git log --merges -n 1 --pretty="%H"
+          if git log --merges -n 1 --pretty="%H" | grep -q ${{ github.sha }}; then
             echo "::set-output name=is_merge::true"
           fi
   build-push-to-ecr-then-update-infra-overlay:
