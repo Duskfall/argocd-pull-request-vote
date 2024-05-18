@@ -20,6 +20,7 @@ jobs:
         id: check
         run: |
           echo "::set-output name=is_merge::false"
+          echo "is_merge has been set to: ${{ steps.check.outputs.is_merge }}"
           MERGE_COMMIT=$(git log --merges -n 1 --pretty="%H")
           echo "Merge commit: $MERGE_COMMIT"
           echo ${{ github.sha }}
