@@ -27,9 +27,6 @@ jobs:
           if [ "$MERGE_COMMIT" = "${{ github.sha }}" ]; then
             echo "is_merge=true" >> $GITHUB_OUTPUT
           fi
-      - name: Print is_merge
-        run: |
-          echo "is_merge: ${{ steps.check.outputs.is_merge }}"
   build-push-to-ecr-then-update-infra-overlay:
     needs: check
     if: ${{ needs.check.outputs.is_merge == 'false' }}
