@@ -19,6 +19,7 @@ jobs:
       - name: Check if commit is a merge
         id: check
         run: |
+          echo "::set-output name=is_merge::false"
           echo "is_merge=false" >> $GITHUB_OUTPUT
           echo "is_merge has been set to: ${{ steps.check.outputs.is_merge }}"
           MERGE_COMMIT=$(git log --merges -n 1 --pretty="%H")
@@ -26,7 +27,11 @@ jobs:
           echo ${{ github.sha }}
           if [ "$MERGE_COMMIT" = "${{ github.sha }}" ]; then
             echo "is_merge=true" >> $GITHUB_OUTPUT
+            echo "::set-output name=is_merge::true"
           fi
+      - name: Print is_merge
+        run: |
+          echo "is_merge: ${{ steps.check.outputs.is_merge }}"
   build-push-to-ecr-then-update-infra-overlay:
     needs: check
     if: ${{ needs.check.outputs.is_merge == 'false' }}
