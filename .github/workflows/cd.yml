@@ -20,12 +20,13 @@ jobs:
         id: check
         run: |
           echo "::set-output name=is_merge::false"
-          git log --merges -n 1 --pretty="%H"
+          MERGE_COMMIT=$(git log --merges -n 1 --pretty="%H")
+          echo "Merge commit: $MERGE_COMMIT"
           echo ${{ github.sha }}
-          echo ${{ steps.check.outputs.is_merge }}
-          if git log --merges -n 1 --pretty="%H" | grep -q ${{ github.sha }}; then
+          if [ "$MERGE_COMMIT" = "${{ github.sha }}" ]; then
             echo "::set-output name=is_merge::true"
           fi
+          echo is_merge ${{ steps.check.outputs.is_merge }}
   build-push-to-ecr-then-update-infra-overlay:
     if: ${{ needs.check.outputs.is_merge == 'false' }}
     runs-on: ubuntu-latest
