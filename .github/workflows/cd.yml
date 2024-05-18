@@ -9,7 +9,22 @@ env:
   REPOSITORY_NAME: "pull-request-vote"
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      is_merge: ${{ steps.check.outputs.is_merge }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Check if commit is a merge
+        id: check
+        run: |
+          echo "::set-output name=is_merge::false"
+          if git log --merges -n 1 --pretty="%H" | grep -q ${{ github.sha }}; then
+            echo "::set-output name=is_merge::true"
+          fi
   build-push-to-ecr-then-update-infra-overlay:
+    if: ${{ needs.check.outputs.is_merge == 'false' }}
     runs-on: ubuntu-latest
     # https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
     # /!\ you can skip workflow runs triggered by the push and pull_request events by including :
@@ -29,13 +44,6 @@ jobs:
     - name: Checkout
       # https://github.com/actions/checkout
       uses: actions/checkout@v3
-
-    - name: Check if commit is a merge
-      run: |
-        if git log --merges -n 1 --pretty="%H" | grep -q ${{ github.sha }}; then
-          echo "This is a merge commit, skipping job."
-          exit 0
-        fi
 
     - name: Configure AWS credentials
       # https://github.com/aws-actions/configure-aws-credentials/tree/master
