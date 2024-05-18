@@ -31,6 +31,7 @@ jobs:
         run: |
           echo "is_merge: ${{ steps.check.outputs.is_merge }}"
   build-push-to-ecr-then-update-infra-overlay:
+    needs: check
     if: ${{ needs.check.outputs.is_merge == 'false' }}
     runs-on: ubuntu-latest
     # https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
