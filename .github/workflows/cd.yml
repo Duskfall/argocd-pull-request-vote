@@ -20,8 +20,9 @@ jobs:
         id: check
         run: |
           echo "::set-output name=is_merge::false"
-          echo git log --merges -n 1 --pretty="%H"
+          git log --merges -n 1 --pretty="%H"
           echo ${{ github.sha }}
+          echo ${{ steps.check.outputs.is_merge }}
           if git log --merges -n 1 --pretty="%H" | grep -q ${{ github.sha }}; then
             echo "::set-output name=is_merge::true"
           fi
